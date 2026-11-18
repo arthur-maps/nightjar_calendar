@@ -1,7 +1,8 @@
 // ===== CONFIG — fill these in =====
 const CALENDAR_ID = "f47813df05cc1e6708e514a8ca2036b61802c80739ba0eeba3fcabcfce81c6c4@group.calendar.google.com";
 const API_KEY = "AIzaSyDesws55psRt1IX2ggC233XdKZ7BJ-GTW4";
-const MAX_EVENTS = 8;
+const MAX_EVENTS = 8;    // how many events the list shows
+const FETCH_COUNT = 25;  // how many upcoming events to scan for flyers
 const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone; // visitor's time zone
 // ==================================
 
@@ -11,14 +12,14 @@ document.getElementById("calendar-frame").src =
   "?src=" + encodeURIComponent(CALENDAR_ID) +
   "&ctz=" + encodeURIComponent(TIME_ZONE);
 
-// 2. Load the next few events
+// 2. Load upcoming events, then fill the list and the flyer carousel
 async function loadUpcomingEvents() {
   const list = document.getElementById("event-list");
 
   const params = new URLSearchParams({
     key: API_KEY,
     timeMin: new Date().toISOString(),
-    maxResults: MAX_EVENTS,
+    maxResults: FETCH_COUNT,
     singleEvents: "true", // expand recurring events into individual instances
     orderBy: "startTime",
   });
@@ -38,14 +39,16 @@ async function loadUpcomingEvents() {
     const data = await res.json();
     const events = data.items || [];
 
+    // Event list (first few only)
     list.innerHTML = "";
-
     if (events.length === 0) {
       list.innerHTML = '<li class="status">No upcoming events.</li>';
-      return;
+    } else {
+      events.slice(0, MAX_EVENTS).forEach((event) => list.appendChild(renderEvent(event)));
     }
 
-    events.forEach((event) => list.appendChild(renderEvent(event)));
+    // Flyer carousel (any upcoming event that has a flyer)
+    renderCarousel(events);
   } catch (err) {
     list.innerHTML = "";
     const li = document.createElement("li");
@@ -99,4 +102,89 @@ function formatEventTime(event) {
   return `${datePart} · ${start.toLocaleTimeString(undefined, timeOpts)} – ${end.toLocaleTimeString(undefined, timeOpts)}`;
 }
 
+// ===== Flyers =====
+
+// Looks for a line like "Flyer: https://..." in the event description
+function getFlyerUrl(event) {
+  if (!event.description) return null;
+
+  // Descriptions can contain HTML; convert to plain text, keeping line breaks
+  const html = event.description.replace(/<br\s*\/?>|<\/p>|<\/div>/gi, "\n");
+  const text = new DOMParser().parseFromString(html, "text/html").body.textContent;
+
+  const match = text.match(/flyer:\s*(https?:\/\/\S+)/i);
+  return match ? toImageUrl(match[1]) : null;
+}
+
+// Turns a Google Drive share link into a direct image URL; other URLs pass through
+function toImageUrl(url) {
+  const drive = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:.*&)?id=)([\w-]+)/);
+  if (drive) return `https://drive.google.com/thumbnail?id=${drive[1]}&sz=w1000`;
+  return url;
+}
+
+function renderCarousel(events) {
+  const section = document.getElementById("flyers");
+  const track = document.getElementById("carousel-track");
+  track.innerHTML = "";
+
+  const withFlyers = events
+    .map((event) => ({ event, flyer: getFlyerUrl(event) }))
+    .filter((item) => item.flyer);
+
+  if (withFlyers.length === 0) {
+    section.hidden = true;
+    return;
+  }
+
+  withFlyers.forEach(({ event, flyer }) => {
+    const figure = document.createElement("figure");
+    figure.className = "flyer";
+    figure.tabIndex = 0; // lets keyboard users reveal the caption too
+
+    const img = document.createElement("img");
+    img.src = flyer;
+    img.alt = `Flyer for ${event.summary || "event"}`;
+    img.loading = "lazy";
+    img.onerror = () => {
+      // Drop flyers that fail to load; hide the section if none are left
+      figure.remove();
+      if (!track.children.length) section.hidden = true;
+      updateCarouselButtons();
+    };
+
+    const caption = document.createElement("figcaption");
+    const title = document.createElement("span");
+    title.className = "flyer-title";
+    title.textContent = event.summary || "(No title)";
+    const date = document.createElement("span");
+    date.className = "flyer-date";
+    date.textContent = formatEventTime(event);
+    caption.append(title, date);
+
+    figure.append(img, caption);
+    track.appendChild(figure);
+  });
+
+  section.hidden = false;
+  updateCarouselButtons();
+}
+
+// Carousel arrow buttons
+const track = document.getElementById("carousel-track");
+const prevBtn = document.querySelector(".carousel-btn.prev");
+const nextBtn = document.querySelector(".carousel-btn.next");
+
+prevBtn.addEventListener("click", () => track.scrollBy({ left: -track.clientWidth * 0.8 }));
+nextBtn.addEventListener("click", () => track.scrollBy({ left: track.clientWidth * 0.8 }));
+track.addEventListener("scroll", updateCarouselButtons);
+window.addEventListener("resize", updateCarouselButtons);
+
+function updateCarouselButtons() {
+  const maxScroll = track.scrollWidth - track.clientWidth;
+  prevBtn.hidden = track.scrollLeft <= 1;
+  nextBtn.hidden = track.scrollLeft >= maxScroll - 1;
+}
+
 loadUpcomingEvents();
+
