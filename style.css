@@ -16,6 +16,7 @@ header {
   font-family: "Sono", monospace;
 }
 
+
 header h1 {
   margin: 0;
   font-size: 1.5rem;
@@ -95,7 +96,7 @@ section {
 
 /* ===== Flyer carousel ===== */
 .flyers {
-  grid-column: 2; /* sits under the calendar */
+  grid-column: 1 / -1; /* spans the full width under both columns */
 }
 
 .flyers[hidden] {
@@ -214,12 +215,9 @@ section {
     grid-template-columns: 1fr;
   }
 
-  .flyers {
-    grid-column: auto;
-  }
-
   .calendar iframe {
     height: 450px;
   }
 }
+
 
