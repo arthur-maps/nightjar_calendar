@@ -60,12 +60,7 @@ function renderEvent(event) {
 
   const title = document.createElement("p");
   title.className = "event-title";
-  const link = document.createElement("a");
-  link.href = event.htmlLink;
-  link.target = "_blank";
-  link.rel = "noopener";
-  link.textContent = event.summary || "(No title)";
-  title.appendChild(link);
+  title.textContent = event.summary || "(No title)";
 
   const time = document.createElement("p");
   time.className = "event-time";
