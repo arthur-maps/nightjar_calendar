@@ -218,6 +218,26 @@ section {
   .calendar iframe {
     height: 450px;
   }
+
+  /* Flyers stack vertically instead of scrolling sideways */
+  .carousel-track {
+    flex-direction: column;
+    overflow-x: visible;
+    scroll-snap-type: none;
+  }
+
+  .flyer {
+    flex: none;
+    width: 100%;
+  }
+
+  .flyer img {
+    height: auto; /* show the whole flyer, no cropping */
+  }
+
+  .carousel-btn {
+    display: none;
+  }
 }
 
 
