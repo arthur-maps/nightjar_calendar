@@ -93,13 +93,133 @@ section {
   border: 0;
 }
 
+/* ===== Flyer carousel ===== */
+.flyers {
+  grid-column: 2; /* sits under the calendar */
+}
+
+.flyers[hidden] {
+  display: none;
+}
+
+.flyers h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+}
+
+.carousel {
+  position: relative;
+}
+
+.carousel-track {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.flyer {
+  position: relative;
+  flex: 0 0 220px;
+  margin: 0;
+  scroll-snap-align: start;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #eee;
+  outline: none;
+}
+
+.flyer img {
+  display: block;
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+}
+
+.flyer figcaption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 2rem 0.75rem 0.75rem;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+  color: #fff;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.flyer:hover figcaption,
+.flyer:focus figcaption {
+  opacity: 1;
+  transform: none;
+}
+
+/* Touch screens can't hover, so always show the caption there */
+@media (hover: none) {
+  .flyer figcaption {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.flyer-title {
+  display: block;
+  font-weight: 600;
+}
+
+.flyer-date {
+  display: block;
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.carousel-btn[hidden] {
+  display: none;
+}
+
+.carousel-btn.prev {
+  left: -10px;
+}
+
+.carousel-btn.next {
+  right: -10px;
+}
+
 /* Stack on small screens */
 @media (max-width: 800px) {
   main {
     grid-template-columns: 1fr;
   }
 
+  .flyers {
+    grid-column: auto;
+  }
+
   .calendar iframe {
     height: 450px;
   }
 }
+
